@@ -1,0 +1,377 @@
+<div class="page" dir="rtl">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ 'feature.period_planning.title' | translate }}</h1>
+      <p class="page-subtitle">{{ 'feature.period_planning.title_desc' | translate }}</p>
+    </div>
+    <button class="btn btn-primary" (click)="openCreateDialog()">
+      ➕ برنامه دوره‌ای جدید
+    </button>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-body">
+        <div>
+          <p class="stat-label">کل برنامه‌ها</p>
+          <p class="stat-value">{{ stats.total }}</p>
+        </div>
+        <span class="stat-icon">📋</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-body">
+        <div>
+          <p class="stat-label">پیش‌نویس</p>
+          <p class="stat-value text-gray">{{ stats.draft }}</p>
+        </div>
+        <span class="stat-icon">📝</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-body">
+        <div>
+          <p class="stat-label">تایید شده</p>
+          <p class="stat-value text-blue">{{ stats.approved }}</p>
+        </div>
+        <span class="stat-icon">✅</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-body">
+        <div>
+          <p class="stat-label">فعال</p>
+          <p class="stat-value text-green">{{ stats.active }}</p>
+        </div>
+        <span class="stat-icon">🔄</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-body">
+        <div>
+          <p class="stat-label">تکمیل شده</p>
+          <p class="stat-value text-completed">{{ stats.completed }}</p>
+        </div>
+        <span class="stat-icon">🏁</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Plans Table -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">لیست برنامه‌های دوره‌ای</h3>
+    </div>
+    <div class="card-content">
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>عنوان / توضیحات</th>
+              <th>پروژه</th>
+              <th>عملیات</th>
+              <th>دوره / بازه زمانی</th>
+              <th>مجموع برنامه / واحد</th>
+              <th>عملیات</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (plan of allPeriodPlans; track plan.id) {
+              <tr>
+                <td>
+                  <div class="cell-stack">
+                    <span class="font-medium">{{ plan.title }}</span>
+                    @if (plan.description) {
+                      <span class="text-muted text-xs">{{ plan.description }}</span>
+                    }
+                  </div>
+                </td>
+                <td>{{ getProjectName(plan.projectId) }}</td>
+                <td>
+                  <span class="badge status-blue">{{ plan.operationName || getOperationName(plan.operationId) }}</span>
+                </td>
+                <td>
+                  <div class="cell-stack">
+                    <span class="badge period-badge">{{ getPeriodLabel(plan.period) }}</span>
+                    <span class="text-muted text-xs">{{ plan.startDate }} - {{ plan.endDate }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="font-medium">{{ plan.totalPlanned }}</span>
+                  <span class="text-muted text-sm"> {{ getUnitLabel(plan.unit) }}</span>
+                </td>
+                <td>
+                  <div class="actions">
+                    <button class="btn btn-sm btn-outline" (click)="openViewDialog(plan)" title="مشاهده">👁️</button>
+                    <button class="btn btn-sm btn-outline btn-danger" (click)="deletePlan(plan.id)" title="حذف">🗑️</button>
+                  </div>
+                </td>
+              </tr>
+            }
+            @if (allPeriodPlans.length === 0) {
+              <tr>
+                <td colspan="6" class="empty-state">
+                  برنامه دوره‌ای برای نمایش وجود ندارد
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Dialog -->
+  @if (isCreateDialogOpen) {
+    <div class="dialog-overlay" (click)="closeCreateDialog()">
+      <div class="dialog dialog-lg" (click)="$event.stopPropagation()" dir="rtl">
+        <div class="dialog-header">
+          <h3>ایجاد برنامه دوره‌ای جدید</h3>
+          <p class="dialog-desc">اطلاعات برنامه دوره‌ای را وارد کنید</p>
+        </div>
+        <form (ngSubmit)="handleCreate()" class="scrollable-form">
+          <!-- Project & Operation -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>پروژه</label>
+              <select [(ngModel)]="formData.projectId" name="projectId" required (ngModelChange)="onProjectChange()">
+                <option value="" disabled>انتخاب پروژه</option>
+                @for (p of dataService.projects; track p.id) {
+                  <option [value]="p.id">{{ p.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label>عملیات</label>
+              <select [(ngModel)]="formData.operationId" name="operationId" required>
+                <option value="" disabled>انتخاب عملیات</option>
+                @for (op of filteredOperations; track op.id) {
+                  <option [value]="op.id">{{ op.name }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <!-- Title -->
+          <div class="form-group">
+            <label>عنوان</label>
+            <input type="text" [(ngModel)]="formData.title" name="title" required />
+          </div>
+
+          <!-- Description -->
+          <div class="form-group">
+            <label>توضیحات</label>
+            <textarea [(ngModel)]="formData.description" name="description" rows="3"></textarea>
+          </div>
+
+          <!-- Period & Start Date -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>نوع دوره</label>
+              <select [(ngModel)]="formData.period" name="period">
+                @for (po of periodOptions; track po.value) {
+                  <option [value]="po.value">{{ po.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label>تاریخ شروع</label>
+              <input type="text" [(ngModel)]="formData.startDate" name="startDate" placeholder="1403/08/15" required />
+            </div>
+          </div>
+
+          <!-- Custom End Date -->
+          @if (isCustomPeriod) {
+            <div class="form-group">
+              <label>تاریخ پایان سفارشی</label>
+              <input type="text" [(ngModel)]="formData.customEndDate" name="customEndDate" placeholder="1403/09/15" required />
+            </div>
+          }
+
+          <!-- Unit & Default Daily Target -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>واحد</label>
+              <select [(ngModel)]="formData.unit" name="unit">
+                @for (u of units; track u.value) {
+                  <option [value]="u.value">{{ u.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label>هدف روزانه پیش‌فرض</label>
+              <input type="number" [(ngModel)]="formData.defaultDailyTarget" name="defaultDailyTarget" required />
+            </div>
+          </div>
+
+          <!-- Equipment Checkboxes -->
+          @if (filteredEquipment.length > 0) {
+            <div class="form-group">
+              <label>تجهیزات</label>
+              <div class="checkbox-grid">
+                @for (eq of filteredEquipment; track eq.id) {
+                  <label class="checkbox-label">
+                    <input
+                      type="checkbox"
+                      [checked]="isEquipmentSelected(eq.id)"
+                      (change)="toggleEquipment(eq.id)" />
+                    {{ eq.name }}
+                  </label>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Operator Checkboxes -->
+          @if (filteredOperators.length > 0) {
+            <div class="form-group">
+              <label>اپراتورها</label>
+              <div class="checkbox-grid">
+                @for (op of filteredOperators; track op.id) {
+                  <label class="checkbox-label">
+                    <input
+                      type="checkbox"
+                      [checked]="isOperatorSelected(op.id)"
+                      (change)="toggleOperator(op.id)" />
+                    {{ op.name }}
+                  </label>
+                }
+              </div>
+            </div>
+          }
+
+          <div class="dialog-actions">
+            <button type="button" class="btn btn-outline" (click)="closeCreateDialog()">انصراف</button>
+            <button type="submit" class="btn btn-primary">ایجاد برنامه</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- View Dialog -->
+  @if (isViewDialogOpen && viewPlan) {
+    <div class="dialog-overlay" (click)="closeViewDialog()">
+      <div class="dialog dialog-xl" (click)="$event.stopPropagation()" dir="rtl">
+        <div class="dialog-header">
+          <h3>جزئیات برنامه دوره‌ای</h3>
+          <p class="dialog-desc">اطلاعات کامل برنامه</p>
+        </div>
+        <div class="scrollable-form">
+          <!-- Header grid -->
+          <div class="view-grid">
+            <div class="view-item">
+              <span class="view-label">عنوان</span>
+              <span class="view-value">{{ viewPlan.title }}</span>
+            </div>
+            <div class="view-item">
+              <span class="view-label">پروژه</span>
+              <span class="view-value">{{ getProjectName(viewPlan.projectId) }}</span>
+            </div>
+            <div class="view-item">
+              <span class="view-label">عملیات</span>
+              <span class="view-value">{{ viewPlan.operationName || getOperationName(viewPlan.operationId) }}</span>
+            </div>
+            <div class="view-item">
+              <span class="view-label">دوره</span>
+              <span class="view-value">{{ getPeriodLabel(viewPlan.period) }}</span>
+            </div>
+            <div class="view-item">
+              <span class="view-label">واحد</span>
+              <span class="view-value">{{ getUnitLabel(viewPlan.unit) }}</span>
+            </div>
+            <div class="view-item">
+              <span class="view-label">تاریخ شروع</span>
+              <span class="view-value">{{ viewPlan.startDate }}</span>
+            </div>
+            <div class="view-item">
+              <span class="view-label">تاریخ پایان</span>
+              <span class="view-value">{{ viewPlan.endDate }}</span>
+            </div>
+            @if (viewPlan.description) {
+              <div class="view-item view-item-full">
+                <span class="view-label">توضیحات</span>
+                <span class="view-value">{{ viewPlan.description }}</span>
+              </div>
+            }
+          </div>
+
+          <!-- Total planned summary -->
+          <div class="total-summary">
+            <span class="total-label">مجموع برنامه‌ریزی شده:</span>
+            <span class="total-value">{{ viewPlan.totalPlanned }} {{ getUnitLabel(viewPlan.unit) }}</span>
+          </div>
+
+          <!-- Daily plans table -->
+          <div class="card inner-card">
+            <div class="card-header">
+              <h3 class="card-title">برنامه روزانه</h3>
+            </div>
+            <div class="card-content">
+              <div class="table-wrapper">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>تاریخ</th>
+                      <th>مقدار برنامه</th>
+                      <th>وضعیت</th>
+                      <th>یادداشت</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (day of viewPlan.days; track day.date) {
+                      <tr [class.holiday-row]="day.isHoliday">
+                        <td>{{ day.date }}</td>
+                        <td>
+                          <span [class]="getDayAmountColor(day.plannedAmount)">{{ day.plannedAmount }}</span>
+                        </td>
+                        <td>
+                          @if (day.isHoliday) {
+                            <span class="badge badge-holiday">تعطیل</span>
+                          } @else {
+                            <span class="badge badge-working">کاری</span>
+                          }
+                        </td>
+                        <td class="text-muted text-sm">{{ day.notes || '-' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Equipment badges -->
+          @if (viewPlan.assignedEquipment && viewPlan.assignedEquipment.length > 0) {
+            <div class="badges-section">
+              <h4 class="badges-title">تجهیزات تخصیص یافته</h4>
+              <div class="badges-list">
+                @for (eqId of viewPlan.assignedEquipment; track eqId) {
+                  <span class="badge badge-equipment">{{ getEquipmentName(eqId) }}</span>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Operator badges -->
+          @if (viewPlan.assignedOperators && viewPlan.assignedOperators.length > 0) {
+            <div class="badges-section">
+              <h4 class="badges-title">اپراتورهای تخصیص یافته</h4>
+              <div class="badges-list">
+                @for (opId of viewPlan.assignedOperators; track opId) {
+                  <span class="badge badge-operator">{{ getOperatorName(opId) }}</span>
+                }
+              </div>
+            </div>
+          }
+
+          <div class="dialog-actions">
+            <button type="button" class="btn btn-outline" (click)="closeViewDialog()">بستن</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

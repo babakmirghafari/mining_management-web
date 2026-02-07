@@ -1,0 +1,321 @@
+<div class="page" dir="rtl">
+  <!-- ==================== LIST VIEW ==================== -->
+  @if (!showForm) {
+    <!-- Header -->
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">{{ 'feature.achievements.title' | translate }}</h1>
+        <p class="page-subtitle">{{ 'feature.achievements.title_desc' | translate }}</p>
+      </div>
+      <button class="btn btn-primary" (click)="openAddForm()">
+        ➕ ثبت عملکرد جدید
+      </button>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-card-body">
+          <div>
+            <p class="stat-label">کل عملکردها</p>
+            <p class="stat-value">{{ stats.total }}</p>
+          </div>
+          <span class="stat-icon">📊</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-body">
+          <div>
+            <p class="stat-label">تکمیل شده</p>
+            <p class="stat-value text-green">{{ stats.completed }}</p>
+          </div>
+          <span class="stat-icon">✅</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-body">
+          <div>
+            <p class="stat-label">تکمیل جزئی</p>
+            <p class="stat-value text-yellow">{{ stats.partial }}</p>
+          </div>
+          <span class="stat-icon">⚠️</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-body">
+          <div>
+            <p class="stat-label">عدم تحقق</p>
+            <p class="stat-value text-red">{{ stats.failed }}</p>
+          </div>
+          <span class="stat-icon">❌</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-body">
+          <div>
+            <p class="stat-label">میانگین بازدهی</p>
+            <p class="stat-value text-blue">{{ stats.avgEfficiency }}%</p>
+          </div>
+          <span class="stat-icon">📈</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Achievements Table -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">لیست عملکردها</h3>
+      </div>
+      <div class="card-content">
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>تاریخ</th>
+                <th>پروژه</th>
+                <th>عنوان برنامه</th>
+                <th>مقدار برنامه / واحد</th>
+                <th>مقدار عملکرد / واحد</th>
+                <th>بازدهی</th>
+                <th>وضعیت</th>
+                <th>دلایل تأخیر</th>
+                <th>عملیات</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (ach of allAchievements; track ach.id) {
+                <tr>
+                  <td>{{ ach.date }}</td>
+                  <td>{{ getProjectName(ach.projectId) }}</td>
+                  <td>{{ getPlanTitle(ach.planId) }}</td>
+                  <td>
+                    <span class="font-medium">{{ ach.plannedAmount }}</span>
+                    <span class="text-muted text-sm"> {{ getUnitLabel(ach.unit) }}</span>
+                  </td>
+                  <td>
+                    <span class="font-medium">{{ ach.achievedAmount }}</span>
+                    <span class="text-muted text-sm"> {{ getUnitLabel(ach.unit) }}</span>
+                  </td>
+                  <td>
+                    <span [class]="'efficiency-badge ' + getEfficiencyClass(ach.efficiency)">
+                      {{ getEfficiencyIcon(ach.efficiency) }} {{ ach.efficiency }}%
+                    </span>
+                  </td>
+                  <td>
+                    <span [class]="'badge ' + getStatusClass(ach.status)">
+                      {{ getStatusLabel(ach.status) }}
+                    </span>
+                  </td>
+                  <td class="text-sm">{{ getDelayReasonLabels(ach.delayReasons) }}</td>
+                  <td>
+                    <div class="actions">
+                      <button class="btn btn-sm btn-outline" (click)="openEditForm(ach)" title="ویرایش">✏️</button>
+                      <button class="btn btn-sm btn-outline btn-danger" (click)="deleteAchievement(ach.id)" title="حذف">🗑️</button>
+                    </div>
+                  </td>
+                </tr>
+              }
+              @if (allAchievements.length === 0) {
+                <tr>
+                  <td colspan="9" class="empty-state">
+                    رکورد عملکردی برای نمایش وجود ندارد
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ==================== FORM VIEW ==================== -->
+  @if (showForm) {
+    <!-- Back button -->
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">{{ editingAchievement ? 'ویرایش عملکرد' : 'ثبت عملکرد جدید' }}</h1>
+        <p class="page-subtitle">اطلاعات عملکرد را وارد کنید</p>
+      </div>
+      <button class="btn btn-outline" (click)="goBack()">
+        → بازگشت
+      </button>
+    </div>
+
+    <form (ngSubmit)="handleSubmit()">
+      <!-- Card 1: اطلاعات اصلی -->
+      <div class="card form-card">
+        <div class="card-header">
+          <h3 class="card-title">اطلاعات اصلی</h3>
+        </div>
+        <div class="card-content">
+          <div class="form-row">
+            <div class="form-group">
+              <label>پروژه</label>
+              <select [(ngModel)]="formData.projectId" name="projectId" required>
+                <option value="" disabled>انتخاب پروژه</option>
+                @for (p of dataService.projects; track p.id) {
+                  <option [value]="p.id">{{ p.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label>برنامه</label>
+              <select [(ngModel)]="formData.planId" name="planId" (ngModelChange)="onPlanChange()" required>
+                <option value="" disabled>انتخاب برنامه</option>
+                @for (plan of filteredPlans; track plan.id) {
+                  <option [value]="plan.id">{{ plan.title }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          @if (selectedPlan) {
+            <div class="alert alert-info">
+              <strong>جزئیات برنامه:</strong>
+              {{ selectedPlan.title }} — هدف: {{ selectedPlan.targetAmount }} {{ getUnitLabel(selectedPlan.unit) }}
+              ({{ selectedPlan.startDate }} تا {{ selectedPlan.endDate }})
+            </div>
+          }
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>تاریخ</label>
+              <input type="text" [(ngModel)]="formData.date" name="date" placeholder="1403/08/15" required />
+            </div>
+            <div class="form-group">
+              <label>مقدار برنامه‌ریزی شده</label>
+              <input type="number" [(ngModel)]="formData.plannedAmount" name="plannedAmount" disabled />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>مقدار عملکرد</label>
+              <input type="number" [(ngModel)]="formData.achievedAmount" name="achievedAmount" required />
+            </div>
+            <div class="form-group">
+              <label>پیش‌نمایش بازدهی</label>
+              <div class="efficiency-preview">
+                <div class="efficiency-bar-wrapper">
+                  <div
+                    class="efficiency-bar"
+                    [class.bar-high]="efficiencyPreview >= 100"
+                    [class.bar-mid]="efficiencyPreview >= 50 && efficiencyPreview < 100"
+                    [class.bar-low]="efficiencyPreview < 50"
+                    [style.width.%]="Math.min(efficiencyPreview, 100)">
+                  </div>
+                </div>
+                <span class="efficiency-label">{{ efficiencyPreview }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: دلایل عدم تحقق -->
+      @if (showDelayReasons) {
+        <div class="card form-card">
+          <div class="card-header">
+            <h3 class="card-title">دلایل عدم تحقق</h3>
+          </div>
+          <div class="card-content">
+            <div class="checkbox-grid">
+              @for (reason of staticDelayReasons; track reason.key) {
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    [checked]="isDelayReasonSelected(reason.key)"
+                    (change)="toggleDelayReason(reason.key)" />
+                  {{ reason.label }}
+                </label>
+              }
+            </div>
+            <div class="form-group" style="margin-top: 1rem;">
+              <label>توضیحات</label>
+              <textarea [(ngModel)]="formData.delayDescription" name="delayDescription" rows="3"
+                        placeholder="توضیحات بیشتر درباره دلایل عدم تحقق"></textarea>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Card 3: ساعات کاری اپراتورها -->
+      <div class="card form-card">
+        <div class="card-header">
+          <h3 class="card-title">ساعات کاری اپراتورها</h3>
+        </div>
+        <div class="card-content">
+          @for (oh of formData.operatorHours; track trackByIndex($index); let i = $index) {
+            <div class="dynamic-row">
+              <div class="form-group flex-grow">
+                <select [(ngModel)]="oh.operatorId" [name]="'operatorId_' + i">
+                  <option value="" disabled>انتخاب اپراتور</option>
+                  @for (op of dataService.operators; track op.id) {
+                    <option [value]="op.id">{{ op.name }}</option>
+                  }
+                </select>
+              </div>
+              <div class="form-group hours-input">
+                <input type="number" [(ngModel)]="oh.hours" [name]="'operatorHours_' + i" placeholder="ساعت" />
+              </div>
+              <button type="button" class="btn btn-sm btn-outline btn-danger" (click)="removeOperatorHour(i)">✕</button>
+            </div>
+          }
+          <button type="button" class="btn btn-outline btn-add" (click)="addOperatorHour()">
+            ➕ افزودن اپراتور
+          </button>
+        </div>
+      </div>
+
+      <!-- Card 4: ساعات کاری تجهیزات -->
+      <div class="card form-card">
+        <div class="card-header">
+          <h3 class="card-title">ساعات کاری تجهیزات</h3>
+        </div>
+        <div class="card-content">
+          @for (eh of formData.equipmentHours; track trackByIndex($index); let i = $index) {
+            <div class="dynamic-row">
+              <div class="form-group flex-grow">
+                <select [(ngModel)]="eh.equipmentId" [name]="'equipmentId_' + i">
+                  <option value="" disabled>انتخاب تجهیز</option>
+                  @for (eq of dataService.equipmentList; track eq.id) {
+                    <option [value]="eq.id">{{ eq.name }}</option>
+                  }
+                </select>
+              </div>
+              <div class="form-group hours-input">
+                <input type="number" [(ngModel)]="eh.hours" [name]="'equipmentHours_' + i" placeholder="ساعت" />
+              </div>
+              <button type="button" class="btn btn-sm btn-outline btn-danger" (click)="removeEquipmentHour(i)">✕</button>
+            </div>
+          }
+          <button type="button" class="btn btn-outline btn-add" (click)="addEquipmentHour()">
+            ➕ افزودن تجهیز
+          </button>
+        </div>
+      </div>
+
+      <!-- Card 5: یادداشت‌ها -->
+      <div class="card form-card">
+        <div class="card-header">
+          <h3 class="card-title">یادداشت‌ها</h3>
+        </div>
+        <div class="card-content">
+          <div class="form-group">
+            <textarea [(ngModel)]="formData.notes" name="notes" rows="4"
+                      placeholder="یادداشت‌های تکمیلی"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div class="form-actions">
+        <button type="button" class="btn btn-outline" (click)="goBack()">انصراف</button>
+        <button type="submit" class="btn btn-primary">
+          {{ editingAchievement ? 'ویرایش' : 'ثبت عملکرد' }}
+        </button>
+      </div>
+    </form>
+  }
+</div>

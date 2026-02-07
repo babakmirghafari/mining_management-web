@@ -1,0 +1,271 @@
+<div class="page" dir="rtl">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ 'feature.planning.title' | translate }}</h1>
+      <p class="page-subtitle">{{ 'feature.planning.title_desc' | translate }}</p>
+    </div>
+    <button class="btn btn-primary" (click)="openAddDialog()">
+      ➕ برنامه جدید
+    </button>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-body">
+        <div>
+          <p class="stat-label">کل برنامه‌ها</p>
+          <p class="stat-value">{{ stats.total }}</p>
+        </div>
+        <span class="stat-icon">📋</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-body">
+        <div>
+          <p class="stat-label">فعال</p>
+          <p class="stat-value text-green">{{ stats.active }}</p>
+        </div>
+        <span class="stat-icon">✅</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-body">
+        <div>
+          <p class="stat-label">تایید شده</p>
+          <p class="stat-value text-blue">{{ stats.approved }}</p>
+        </div>
+        <span class="stat-icon">📝</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-body">
+        <div>
+          <p class="stat-label">تکمیل شده</p>
+          <p class="stat-value text-gray">{{ stats.completed }}</p>
+        </div>
+        <span class="stat-icon">🏁</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    @for (pt of planTypes; track pt.value) {
+      <button
+        class="tab-btn"
+        [class.tab-active]="activeTab === pt.value"
+        (click)="setActiveTab(pt.value)">
+        {{ pt.label }}
+      </button>
+    }
+  </div>
+
+  <!-- Plans Table -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">برنامه‌های {{ getTypeLabel(activeTab) }}</h3>
+    </div>
+    <div class="card-content">
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>عنوان / توضیحات</th>
+              <th>پروژه</th>
+              <th>بازه زمانی</th>
+              <th>هدف / واحد</th>
+              <th>اولویت</th>
+              <th>وضعیت</th>
+              <th>تجهیزات</th>
+              <th>اپراتورها</th>
+              <th>عملیات</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (plan of filteredPlans; track plan.id) {
+              <tr>
+                <td>
+                  <div class="cell-stack">
+                    <span class="font-medium">{{ plan.title }}</span>
+                    @if (plan.description) {
+                      <span class="text-muted text-xs">{{ plan.description }}</span>
+                    }
+                  </div>
+                </td>
+                <td>{{ getProjectName(plan.projectId) }}</td>
+                <td>
+                  <div class="cell-stack">
+                    <span class="text-sm">{{ plan.startDate }}</span>
+                    <span class="text-muted text-xs">{{ plan.endDate }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="font-medium">{{ plan.targetAmount }}</span>
+                  <span class="text-muted text-sm"> {{ getUnitLabel(plan.unit) }}</span>
+                </td>
+                <td>
+                  <span [class]="'badge ' + getPriorityInfo(plan.priority).color">
+                    {{ getPriorityInfo(plan.priority).label }}
+                  </span>
+                </td>
+                <td>
+                  <div class="status-cell">
+                    <span [class]="'badge ' + getStatusInfo(plan.status).color">
+                      {{ getStatusInfo(plan.status).label }}
+                    </span>
+                    @if (getTransitionLabel(plan.status)) {
+                      <button class="btn btn-sm btn-outline btn-transition" (click)="transitionStatus(plan)">
+                        {{ getTransitionLabel(plan.status) }}
+                      </button>
+                    }
+                  </div>
+                </td>
+                <td class="text-sm">{{ getEquipmentNames(plan.assignedEquipment) }}</td>
+                <td class="text-sm">{{ getOperatorNames(plan.assignedOperators) }}</td>
+                <td>
+                  <div class="actions">
+                    <button class="btn btn-sm btn-outline" (click)="openEditDialog(plan)" title="ویرایش">✏️</button>
+                    <button class="btn btn-sm btn-outline btn-danger" (click)="deletePlan(plan.id)" title="حذف">🗑️</button>
+                  </div>
+                </td>
+              </tr>
+            }
+            @if (filteredPlans.length === 0) {
+              <tr>
+                <td colspan="9" class="empty-state">
+                  برنامه‌ای برای نمایش وجود ندارد
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Dialog -->
+  @if (isDialogOpen) {
+    <div class="dialog-overlay" (click)="closeDialog()">
+      <div class="dialog dialog-lg" (click)="$event.stopPropagation()" dir="rtl">
+        <div class="dialog-header">
+          <h3>{{ selectedPlan ? 'ویرایش برنامه' : 'افزودن برنامه جدید' }}</h3>
+          <p class="dialog-desc">
+            {{ selectedPlan ? 'اطلاعات برنامه را ویرایش کنید' : 'اطلاعات برنامه جدید را وارد کنید' }}
+          </p>
+        </div>
+        <form (ngSubmit)="handleSubmit()" class="scrollable-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label>پروژه</label>
+              <select [(ngModel)]="formData.projectId" name="projectId" required>
+                <option value="" disabled>انتخاب پروژه</option>
+                @for (p of dataService.projects; track p.id) {
+                  <option [value]="p.id">{{ p.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label>نوع برنامه</label>
+              <select [(ngModel)]="formData.type" name="type">
+                @for (t of planTypes; track t.value) {
+                  <option [value]="t.value">{{ t.label }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>عنوان</label>
+            <input type="text" [(ngModel)]="formData.title" name="title" required />
+          </div>
+          <div class="form-group">
+            <label>توضیحات</label>
+            <textarea [(ngModel)]="formData.description" name="description" rows="3"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>تاریخ شروع</label>
+              <input type="text" [(ngModel)]="formData.startDate" name="startDate" placeholder="1403/08/15" required />
+            </div>
+            <div class="form-group">
+              <label>تاریخ پایان</label>
+              <input type="text" [(ngModel)]="formData.endDate" name="endDate" placeholder="1403/08/15" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>مقدار هدف</label>
+              <input type="number" [(ngModel)]="formData.targetAmount" name="targetAmount" required />
+            </div>
+            <div class="form-group">
+              <label>واحد</label>
+              <select [(ngModel)]="formData.unit" name="unit">
+                @for (u of units; track u.value) {
+                  <option [value]="u.value">{{ u.label }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>اولویت</label>
+              <select [(ngModel)]="formData.priority" name="priority">
+                @for (pr of priorities; track pr.value) {
+                  <option [value]="pr.value">{{ pr.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label>وضعیت</label>
+              <select [(ngModel)]="formData.status" name="status">
+                @for (s of statuses; track s.value) {
+                  <option [value]="s.value">{{ s.label }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <!-- Equipment Checkboxes -->
+          <div class="form-group">
+            <label>تجهیزات تخصیص یافته</label>
+            <div class="checkbox-grid">
+              @for (eq of dataService.equipmentList; track eq.id) {
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    [checked]="isEquipmentSelected(eq.id)"
+                    (change)="toggleEquipment(eq.id)" />
+                  {{ eq.name }}
+                </label>
+              }
+            </div>
+          </div>
+
+          <!-- Operator Checkboxes -->
+          <div class="form-group">
+            <label>اپراتورهای تخصیص یافته</label>
+            <div class="checkbox-grid">
+              @for (op of dataService.operators; track op.id) {
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    [checked]="isOperatorSelected(op.id)"
+                    (change)="toggleOperator(op.id)" />
+                  {{ op.name }}
+                </label>
+              }
+            </div>
+          </div>
+
+          <div class="dialog-actions">
+            <button type="button" class="btn btn-outline" (click)="closeDialog()">انصراف</button>
+            <button type="submit" class="btn btn-primary">
+              {{ selectedPlan ? 'ویرایش' : 'افزودن' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

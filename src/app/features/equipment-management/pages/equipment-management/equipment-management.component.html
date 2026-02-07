@@ -1,0 +1,256 @@
+<div class="page" dir="rtl">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">مدیریت تجهیزات</h1>
+      <p class="page-subtitle">مدیریت ماشین‌آلات و تجهیزات معدن</p>
+    </div>
+    @if (currentUser?.role === 'admin') {
+      <button class="btn btn-primary" (click)="openAddDialog()">
+        ➕ تجهیز جدید
+      </button>
+    }
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-body">
+        <div>
+          <p class="stat-label">کل تجهیزات</p>
+          <p class="stat-value">{{ stats.total }}</p>
+        </div>
+        <span class="stat-icon">🚛</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-body">
+        <div>
+          <p class="stat-label">فعال</p>
+          <p class="stat-value text-green">{{ stats.active }}</p>
+        </div>
+        <span class="stat-icon">✅</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-body">
+        <div>
+          <p class="stat-label">در تعمیر</p>
+          <p class="stat-value text-yellow">{{ stats.maintenance }}</p>
+        </div>
+        <span class="stat-icon">🔧</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-body">
+        <div>
+          <p class="stat-label">خارج از سرویس</p>
+          <p class="stat-value text-red">{{ stats.outOfService }}</p>
+        </div>
+        <span class="stat-icon">⚠️</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Equipment Table -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">لیست تجهیزات</h3>
+    </div>
+    <div class="card-content">
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>نام / کد</th>
+              <th>نوع</th>
+              <th>مدل</th>
+              <th>وضعیت</th>
+              <th>پروژه</th>
+              <th>موقعیت</th>
+              <th>ساعات کارکرد</th>
+              <th>عملیات</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (eq of filteredEquipment; track eq.id) {
+              <tr>
+                <td>
+                  <div class="cell-stack">
+                    <span class="font-medium">{{ eq.name }}</span>
+                    <span class="text-muted text-xs">{{ eq.code }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge badge-outline">{{ getTypeLabel(eq.type) }}</span>
+                </td>
+                <td>
+                  <div class="cell-stack">
+                    <span class="text-sm font-medium">{{ eq.model }}</span>
+                    <span class="text-muted text-xs">{{ eq.manufacturer }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span [class]="'badge ' + getStatusInfo(eq.status).color">
+                    {{ getStatusInfo(eq.status).label }}
+                  </span>
+                </td>
+                <td>{{ getProjectName(eq.assignedProject) }}</td>
+                <td class="text-sm">{{ eq.location }}</td>
+                <td class="text-sm">{{ eq.operationHours.toLocaleString() }} ساعت</td>
+                <td>
+                  <div class="actions-wrap">
+                    @if (currentUser?.role === 'admin') {
+                      <div class="actions">
+                        <button class="btn btn-sm btn-outline" (click)="openEditDialog(eq)" title="ویرایش">✏️</button>
+                        <button class="btn btn-sm btn-outline" (click)="openTransferDialog(eq)" title="انتقال">🔄</button>
+                        <button class="btn btn-sm btn-outline btn-danger" (click)="deleteEquipment(eq.id)" title="حذف">🗑️</button>
+                      </div>
+                    }
+                    <div class="actions">
+                      @if (eq.status !== 'maintenance') {
+                        <button class="btn btn-sm btn-outline" (click)="handleStatusChange(eq.id, 'maintenance')" title="ارسال به تعمیر">🔧</button>
+                      }
+                      @if (eq.status === 'maintenance') {
+                        <button class="btn btn-sm btn-outline" (click)="handleStatusChange(eq.id, 'active')" title="بازگشت به خدمت">
+                          <span class="dot-green"></span>
+                        </button>
+                      }
+                      @if (eq.status !== 'out_of_service') {
+                        <button class="btn btn-sm btn-outline" (click)="handleStatusChange(eq.id, 'out_of_service')" title="خارج از سرویس">⚠️</button>
+                      }
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Dialog -->
+  @if (isDialogOpen) {
+    <div class="dialog-overlay" (click)="closeDialog()">
+      <div class="dialog dialog-lg" (click)="$event.stopPropagation()" dir="rtl">
+        <div class="dialog-header">
+          <h3>{{ selectedEquipment ? 'ویرایش تجهیز' : 'افزودن تجهیز جدید' }}</h3>
+          <p class="dialog-desc">
+            {{ selectedEquipment ? 'اطلاعات تجهیز را ویرایش کنید' : 'اطلاعات تجهیز جدید را وارد کنید' }}
+          </p>
+        </div>
+        <form (ngSubmit)="handleSubmit()" class="scrollable-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label>نام تجهیز</label>
+              <input type="text" [(ngModel)]="formData.name" name="name" required />
+            </div>
+            <div class="form-group">
+              <label>کد تجهیز</label>
+              <input type="text" [(ngModel)]="formData.code" name="code" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>نوع تجهیز</label>
+              <select [(ngModel)]="formData.type" name="type">
+                @for (t of equipmentTypes; track t.value) {
+                  <option [value]="t.value">{{ t.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label>مدل</label>
+              <input type="text" [(ngModel)]="formData.model" name="model" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>سازنده</label>
+              <input type="text" [(ngModel)]="formData.manufacturer" name="manufacturer" required />
+            </div>
+            <div class="form-group">
+              <label>سال خرید</label>
+              <input type="text" [(ngModel)]="formData.yearOfPurchase" name="yearOfPurchase" placeholder="1400" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>وضعیت</label>
+              <select [(ngModel)]="formData.status" name="status">
+                @for (s of equipmentStatuses; track s.value) {
+                  <option [value]="s.value">{{ s.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label>پروژه تخصیص یافته</label>
+              <select [(ngModel)]="formData.assignedProject" name="assignedProject">
+                <option value="">بدون پروژه</option>
+                @for (p of dataService.projects; track p.id) {
+                  <option [value]="p.id">{{ p.name }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>موقعیت</label>
+            <input type="text" [(ngModel)]="formData.location" name="location" required />
+          </div>
+          <div class="form-row form-row-3">
+            <div class="form-group">
+              <label>ساعات کارکرد</label>
+              <input type="number" [(ngModel)]="formData.operationHours" name="operationHours" />
+            </div>
+            <div class="form-group">
+              <label>آخرین تعمیر</label>
+              <input type="text" [(ngModel)]="formData.lastMaintenance" name="lastMaintenance" placeholder="1403/08/15" />
+            </div>
+            <div class="form-group">
+              <label>تعمیر بعدی</label>
+              <input type="text" [(ngModel)]="formData.nextMaintenance" name="nextMaintenance" placeholder="1403/10/15" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>توضیحات</label>
+            <textarea [(ngModel)]="formData.description" name="description" rows="3"></textarea>
+          </div>
+          <div class="dialog-actions">
+            <button type="button" class="btn btn-outline" (click)="closeDialog()">انصراف</button>
+            <button type="submit" class="btn btn-primary">
+              {{ selectedEquipment ? 'ویرایش' : 'افزودن' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Transfer Dialog -->
+  @if (isTransferDialogOpen) {
+    <div class="dialog-overlay" (click)="closeTransferDialog()">
+      <div class="dialog" (click)="$event.stopPropagation()" dir="rtl">
+        <div class="dialog-header">
+          <h3>انتقال تجهیز</h3>
+          <p class="dialog-desc">پروژه مقصد برای انتقال تجهیز را انتخاب کنید</p>
+        </div>
+        <div class="transfer-body">
+          <p>انتقال تجهیز "{{ transferEquipment?.name }}" به پروژه جدید:</p>
+          <div class="form-group">
+            <select [(ngModel)]="newProjectId" name="newProjectId">
+              <option value="" disabled>انتخاب پروژه مقصد</option>
+              @for (p of transferTargetProjects; track p.id) {
+                <option [value]="p.id">{{ p.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="dialog-actions">
+            <button type="button" class="btn btn-outline" (click)="closeTransferDialog()">انصراف</button>
+            <button type="button" class="btn btn-primary" (click)="handleTransfer()" [disabled]="!newProjectId">انتقال</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

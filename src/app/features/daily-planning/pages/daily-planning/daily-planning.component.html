@@ -1,0 +1,221 @@
+<div class="page" dir="rtl">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ 'feature.daily_planning.title' | translate }}</h1>
+      <p class="page-subtitle">{{ 'feature.daily_planning.title_desc' | translate }}</p>
+    </div>
+  </div>
+
+  <!-- Plan selector (if multiple plans) -->
+  @if (periodPlans.length > 1) {
+    <div class="plan-selector">
+      <label>انتخاب برنامه:</label>
+      <select [(ngModel)]="selectedPlanId">
+        @for (plan of periodPlans; track plan.id) {
+          <option [value]="plan.id">{{ plan.title }} - {{ plan.operationName }} ({{ plan.startDate }} تا {{ plan.endDate }})</option>
+        }
+      </select>
+    </div>
+  }
+
+  @if (periodPlans.length === 0) {
+    <div class="card">
+      <div class="card-content empty-state-box">
+        <p class="empty-state">برنامه دوره‌ای برای ویرایش روزانه وجود ندارد. ابتدا از بخش برنامه‌ریزی دوره‌ای، یک برنامه ایجاد کنید.</p>
+      </div>
+    </div>
+  }
+
+  <!-- All plans as expandable cards -->
+  @for (plan of periodPlans; track plan.id) {
+    <div class="plan-card" [class.plan-card-expanded]="isExpanded(plan.id)">
+      <!-- Plan card header (clickable to expand/collapse) -->
+      <div class="plan-card-header" (click)="toggleExpand(plan.id)">
+        <div class="plan-card-title-row">
+          <span class="expand-icon">{{ isExpanded(plan.id) ? '▼' : '◀' }}</span>
+          <div>
+            <h3 class="plan-card-title">{{ plan.title }}</h3>
+            <p class="plan-card-subtitle">
+              {{ plan.operationName }} | {{ getProjectName(plan.projectId) }} | {{ plan.startDate }} تا {{ plan.endDate }}
+            </p>
+          </div>
+        </div>
+        <div class="plan-card-quick-stats">
+          <span class="quick-stat">{{ getTotalPlanned(plan) }} {{ getUnitLabel(plan.unit) }}</span>
+          <span class="quick-stat-label">مجموع برنامه</span>
+        </div>
+      </div>
+
+      @if (isExpanded(plan.id)) {
+        <!-- Stats row (5 stats) -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card-body">
+              <div>
+                <p class="stat-label">مجموع برنامه‌ریزی</p>
+                <p class="stat-value">{{ getTotalPlanned(plan) }}</p>
+              </div>
+              <span class="stat-icon">📊</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-body">
+              <div>
+                <p class="stat-label">کل روزها</p>
+                <p class="stat-value">{{ getTotalDays(plan) }}</p>
+              </div>
+              <span class="stat-icon">📅</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-body">
+              <div>
+                <p class="stat-label">روزهای کاری</p>
+                <p class="stat-value text-green">{{ getWorkingDays(plan) }}</p>
+              </div>
+              <span class="stat-icon">🔨</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-body">
+              <div>
+                <p class="stat-label">روزهای تعطیل</p>
+                <p class="stat-value text-red">{{ getHolidayDays(plan) }}</p>
+              </div>
+              <span class="stat-icon">🏖️</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-body">
+              <div>
+                <p class="stat-label">میانگین روزانه</p>
+                <p class="stat-value text-blue">{{ getAverageDailyPlan(plan) }}</p>
+              </div>
+              <span class="stat-icon">📈</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Period info card -->
+        <div class="period-info-card">
+          <div class="period-info-grid">
+            <div class="period-info-item">
+              <span class="period-info-label">تاریخ شروع</span>
+              <span class="period-info-value">{{ plan.startDate }}</span>
+            </div>
+            <div class="period-info-item">
+              <span class="period-info-label">تاریخ پایان</span>
+              <span class="period-info-value">{{ plan.endDate }}</span>
+            </div>
+            <div class="period-info-item">
+              <span class="period-info-label">واحد</span>
+              <span class="period-info-value">{{ getUnitLabel(plan.unit) }}</span>
+            </div>
+          </div>
+          <div class="period-info-actions">
+            <button class="btn btn-outline btn-friday" (click)="markFridaysAsHoliday(plan)">
+              🗓️ علامت‌گذاری جمعه‌ها به عنوان تعطیل
+            </button>
+          </div>
+        </div>
+
+        <!-- Daily table -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">برنامه روزانه</h3>
+          </div>
+          <div class="card-content">
+            <div class="table-wrapper">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>ردیف</th>
+                    <th>تاریخ</th>
+                    <th>روز هفته</th>
+                    <th>مقدار برنامه ({{ getUnitLabel(plan.unit) }})</th>
+                    <th>تعطیل</th>
+                    <th>یادداشت</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (day of plan.days; track day.date; let i = $index) {
+                    <tr [class.holiday-row]="day.isHoliday">
+                      <td class="text-muted">{{ i + 1 }}</td>
+                      <td class="font-medium">{{ day.date }}</td>
+                      <td>
+                        <span class="day-name" [class.day-friday]="getPersianDayOfWeek(day.date) === 'جمعه'">
+                          {{ getPersianDayOfWeek(day.date) }}
+                        </span>
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          class="inline-input"
+                          [(ngModel)]="day.plannedAmount"
+                          [disabled]="day.isHoliday === true"
+                          min="0" />
+                      </td>
+                      <td>
+                        <label class="checkbox-label-inline">
+                          <input
+                            type="checkbox"
+                            [checked]="day.isHoliday"
+                            (change)="toggleHoliday(day)" />
+                          @if (day.isHoliday) {
+                            <span class="badge badge-holiday">تعطیل</span>
+                          } @else {
+                            <span class="badge badge-working">کاری</span>
+                          }
+                        </label>
+                      </td>
+                      <td>
+                        <textarea
+                          class="inline-textarea"
+                          [(ngModel)]="day.notes"
+                          [disabled]="day.isHoliday === true"
+                          placeholder="یادداشت..."
+                          rows="1"></textarea>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Equipment badges -->
+        @if (plan.assignedEquipment && plan.assignedEquipment.length > 0) {
+          <div class="badges-section">
+            <h4 class="badges-title">تجهیزات تخصیص یافته</h4>
+            <div class="badges-list">
+              @for (eqId of plan.assignedEquipment; track eqId) {
+                <span class="badge badge-equipment">{{ getEquipmentName(eqId) }}</span>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Operator badges -->
+        @if (plan.assignedOperators && plan.assignedOperators.length > 0) {
+          <div class="badges-section">
+            <h4 class="badges-title">اپراتورهای تخصیص یافته</h4>
+            <div class="badges-list">
+              @for (opId of plan.assignedOperators; track opId) {
+                <span class="badge badge-operator">{{ getOperatorName(opId) }}</span>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Save button -->
+        <div class="save-actions">
+          <button class="btn btn-primary btn-save" (click)="savePlan(plan)">
+            💾 {{ 'common.save' | translate }}
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>

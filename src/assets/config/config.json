@@ -1,0 +1,5 @@
+{
+  "apiUrl": "/api",
+  "production": false,
+  "appTitle": "Mining Management System"
+}

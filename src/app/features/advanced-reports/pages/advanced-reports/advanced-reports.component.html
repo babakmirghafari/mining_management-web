@@ -1,0 +1,322 @@
+<div class="page" dir="rtl">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ 'feature.advanced_reports.title' | translate }}</h1>
+      <p class="page-subtitle">{{ 'feature.advanced_reports.title_desc' | translate }}</p>
+    </div>
+  </div>
+
+  <!-- Filters Card -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">🔍 فیلترها</h3>
+    </div>
+    <div class="card-content">
+      <div class="filters-grid">
+        <div class="form-group">
+          <label>پروژه</label>
+          <select [(ngModel)]="selectedProjectId" (ngModelChange)="onProjectChange()">
+            <option value="">همه پروژه‌ها</option>
+            @for (p of projects; track p.id) {
+              <option [value]="p.id">{{ p.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label>عملیات</label>
+          <select [(ngModel)]="selectedOperationId" (ngModelChange)="onOperationChange()" [disabled]="!selectedProjectId">
+            <option value="">همه عملیات‌ها</option>
+            @for (op of filteredOperations; track op.id) {
+              <option [value]="op.id">{{ op.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label>بازه زمانی</label>
+          <select [(ngModel)]="selectedTimeRange" (ngModelChange)="onTimeRangeChange()">
+            @for (tr of timeRangeOptions; track tr.value) {
+              <option [value]="tr.value">{{ tr.label }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label>نوع نمایش</label>
+          <select [(ngModel)]="selectedViewType" (ngModelChange)="onViewTypeChange()">
+            @for (vt of viewTypeOptions; track vt.value) {
+              <option [value]="vt.value">{{ vt.label }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (!hasData) {
+    <!-- Empty State -->
+    <div class="empty-state">
+      <span class="empty-icon">📭</span>
+      <p class="empty-text">داده‌ای برای نمایش وجود ندارد</p>
+    </div>
+  } @else {
+    <!-- Stats Cards (4) -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-card-body">
+          <div>
+            <p class="stat-label">کل برنامه</p>
+            <p class="stat-value text-blue">{{ totalPlanned.toLocaleString() }}</p>
+          </div>
+          <span class="stat-icon">📋</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-body">
+          <div>
+            <p class="stat-label">کل تحقق</p>
+            <p class="stat-value text-green">{{ totalAchieved.toLocaleString() }}</p>
+          </div>
+          <span class="stat-icon">✅</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-body">
+          <div>
+            <p class="stat-label">میانگین راندمان</p>
+            <p class="stat-value text-purple">{{ avgEfficiency }}%</p>
+          </div>
+          <span class="stat-icon">📊</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-body">
+          <div>
+            <p class="stat-label">روند عملکرد</p>
+            <p class="stat-value" [class]="trendClass">{{ trendIndicator }} {{ trendLabel }}</p>
+          </div>
+          <span class="stat-icon">📈</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs-bar">
+      @for (tab of tabs; track tab.key) {
+        <button
+          class="tab-btn"
+          [class.tab-active]="activeTab === tab.key"
+          (click)="activeTab = $any(tab.key)">
+          {{ tab.icon }} {{ tab.label }}
+        </button>
+      }
+    </div>
+
+    <!-- ===================== TAB 1: Chart → Table ===================== -->
+    @if (activeTab === 'chart-table') {
+      <!-- Main data table based on timeRange -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">📅 داده‌های {{ getTimeRangeLabel() }}</h3>
+        </div>
+        <div class="card-content">
+          <div class="table-wrapper">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ردیف</th>
+                  <th>دوره</th>
+                  <th>برنامه</th>
+                  <th>تحقق</th>
+                  <th>راندمان</th>
+                  <th>پیشرفت</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (entry of processedData; track entry.label; let i = $index) {
+                  <tr>
+                    <td class="text-muted">{{ i + 1 }}</td>
+                    <td class="font-medium">{{ entry.label }}</td>
+                    <td>{{ entry.planned.toLocaleString() }}</td>
+                    <td>{{ entry.achieved.toLocaleString() }}</td>
+                    <td>
+                      <span [class]="'eff-badge ' + getEfficiencyClass(entry.efficiency)">
+                        {{ entry.efficiency }}%
+                      </span>
+                    </td>
+                    <td>
+                      <div class="progress-cell">
+                        <div class="progress-bar">
+                          <div
+                            class="progress-bar-fill"
+                            [class.fill-green]="entry.efficiency >= 95"
+                            [class.fill-blue]="entry.efficiency >= 90 && entry.efficiency < 95"
+                            [class.fill-yellow]="entry.efficiency >= 80 && entry.efficiency < 90"
+                            [class.fill-red]="entry.efficiency < 80"
+                            [style.width.%]="getBarWidth(entry.efficiency)">
+                          </div>
+                        </div>
+                        <span class="progress-text">{{ entry.efficiency }}%</span>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Efficiency trend summary table -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">📈 خلاصه روند راندمان</h3>
+        </div>
+        <div class="card-content">
+          <div class="table-wrapper">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>دوره</th>
+                  <th>راندمان</th>
+                  <th>وضعیت</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (entry of processedData; track entry.label; let i = $index) {
+                  <tr>
+                    <td class="font-medium">{{ entry.label }}</td>
+                    <td>
+                      <span [class]="'eff-badge ' + getEfficiencyClass(entry.efficiency)">
+                        {{ entry.efficiency }}%
+                      </span>
+                    </td>
+                    <td>
+                      @if (i === 0) {
+                        <span class="trend-indicator trend-neutral">—</span>
+                      } @else if (entry.efficiency >= processedData[i - 1].efficiency) {
+                        <span class="trend-indicator trend-up">↑ بهبود</span>
+                      } @else {
+                        <span class="trend-indicator trend-down">↓ کاهش</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ===================== TAB 2: Data Table ===================== -->
+    @if (activeTab === 'data-table') {
+      @if (selectedViewType === 'trend') {
+        <!-- Trend view data table -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">📋 جدول داده‌ها (روند)</h3>
+          </div>
+          <div class="card-content">
+            <div class="table-wrapper">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>ردیف</th>
+                    <th>دوره</th>
+                    <th>برنامه</th>
+                    <th>تحقق</th>
+                    <th>اختلاف</th>
+                    <th>راندمان</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (entry of processedData; track entry.label; let i = $index) {
+                    <tr>
+                      <td class="text-muted">{{ i + 1 }}</td>
+                      <td class="font-medium">{{ entry.label }}</td>
+                      <td>{{ entry.planned.toLocaleString() }}</td>
+                      <td>{{ entry.achieved.toLocaleString() }}</td>
+                      <td [class]="entry.achieved - entry.planned >= 0 ? 'text-green font-medium' : 'text-red font-medium'">
+                        {{ (entry.achieved - entry.planned).toLocaleString() }}
+                      </td>
+                      <td>
+                        <span [class]="'eff-badge ' + getEfficiencyClass(entry.efficiency)">
+                          {{ entry.efficiency }}%
+                        </span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      } @else {
+        <!-- Cumulative view data table -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">📋 جدول داده‌ها (تجمیعی)</h3>
+          </div>
+          <div class="card-content">
+            <div class="table-wrapper">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>ردیف</th>
+                    <th>دوره</th>
+                    <th>برنامه</th>
+                    <th>تحقق</th>
+                    <th>برنامه تجمیعی</th>
+                    <th>تحقق تجمیعی</th>
+                    <th>راندمان تجمیعی</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (entry of cumulativeData; track entry.label; let i = $index) {
+                    <tr>
+                      <td class="text-muted">{{ i + 1 }}</td>
+                      <td class="font-medium">{{ entry.label }}</td>
+                      <td>{{ entry.planned.toLocaleString() }}</td>
+                      <td>{{ entry.achieved.toLocaleString() }}</td>
+                      <td class="font-medium">{{ entry.cumulativePlanned.toLocaleString() }}</td>
+                      <td class="font-medium">{{ entry.cumulativeAchieved.toLocaleString() }}</td>
+                      <td>
+                        <span [class]="'eff-badge ' + getEfficiencyClass(entry.cumulativeEfficiency)">
+                          {{ entry.cumulativeEfficiency }}%
+                        </span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      }
+    }
+
+    <!-- Summary Cards (Best / Worst) -->
+    <div class="summary-grid">
+      @if (bestPeriod) {
+        <div class="summary-card summary-best">
+          <div class="summary-icon">🏆</div>
+          <div class="summary-content">
+            <h4 class="summary-title">بهترین دوره</h4>
+            <p class="summary-label">{{ bestPeriod.label }}</p>
+            <p class="summary-value text-green">{{ bestPeriod.efficiency }}%</p>
+          </div>
+        </div>
+      }
+      @if (worstPeriod) {
+        <div class="summary-card summary-worst">
+          <div class="summary-icon">⚠️</div>
+          <div class="summary-content">
+            <h4 class="summary-title">ضعیف‌ترین دوره</h4>
+            <p class="summary-label">{{ worstPeriod.label }}</p>
+            <p class="summary-value text-red">{{ worstPeriod.efficiency }}%</p>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

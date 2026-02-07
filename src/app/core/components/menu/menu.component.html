@@ -1,0 +1,10 @@
+<nav class="menu-nav">
+  <button
+    *ngFor="let item of menuItems"
+    class="menu-btn"
+    [class.active]="activeRoute === item.route"
+    (click)="onNavigate(item.route)">
+    <span class="menu-icon">{{ item.icon }}</span>
+    <span *ngIf="sidebarOpen" class="menu-label">{{ item.label | translate }}</span>
+  </button>
+</nav>

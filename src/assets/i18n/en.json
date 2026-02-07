@@ -1,0 +1,118 @@
+{
+  "common": {
+    "system_title": "سیستم مدیریت معدن",
+    "logout": "خروج",
+    "reset_data": "بازنشانی داده‌ها",
+    "role_admin": "مدیر سیستم",
+    "role_project_manager": "مدیر پروژه",
+    "role_operator": "اپراتور",
+    "loading": "در حال بارگذاری...",
+    "save": "ذخیره",
+    "cancel": "انصراف",
+    "delete": "حذف",
+    "edit": "ویرایش",
+    "add": "افزودن",
+    "search": "جستجو",
+    "filter": "فیلتر",
+    "actions": "عملیات",
+    "status": "وضعیت",
+    "name": "نام",
+    "description": "توضیحات",
+    "date": "تاریخ",
+    "submit": "ارسال",
+    "confirm": "تأیید",
+    "back": "بازگشت",
+    "version_main": "نسخه اصلی",
+    "version_experimental": "نسخه آزمایشی"
+  },
+  "login": {
+    "title": "سیستم مدیریت معدن",
+    "subtitle": "لطفاً وارد حساب کاربری خود شوید",
+    "username": "نام کاربری",
+    "password": "رمز عبور",
+    "submit": "ورود",
+    "logging_in": "در حال ورود...",
+    "success": "ورود موفقیت‌آمیز",
+    "error": "نام کاربری یا رمز عبور اشتباه است",
+    "demo_accounts": "حساب‌های نمونه:",
+    "demo_admin": "مدیر: admin (رمز: 123456)",
+    "demo_pm": "مدیر پروژه: ali_pm (رمز: 123456)",
+    "demo_operator": "اپراتور: operator1 (رمز: 123456)"
+  },
+  "menu": {
+    "dashboard": "داشبورد",
+    "users": "مدیریت کاربران",
+    "operators": "مدیریت اپراتورها",
+    "projects": "مدیریت پروژه‌ها",
+    "my_projects": "پروژه‌های من",
+    "equipment": "مدیریت تجهیزات",
+    "project_equipment": "تجهیزات پروژه",
+    "planning": "برنامه‌ریزی",
+    "period_planning": "برنامه‌ریزی",
+    "drill_planning": "برنامه‌ریزی حفاری",
+    "achievements": "ثبت عملکرد",
+    "period_achievements": "عملکرد",
+    "reports": "گزارشات",
+    "project_reports": "گزارشات پروژه",
+    "advanced_reports": "گزارشات تحلیلی",
+    "delay_reasons": "دلایل تاخیر"
+  },
+  "feature": {
+    "dashboard": {
+      "title": "داشبورد",
+      "title_desc": "نمای کلی وضعیت پروژه‌ها و عملکرد سیستم"
+    },
+    "users": {
+      "title": "مدیریت کاربران",
+      "title_desc": "مدیریت کاربران و نقش‌های سیستم"
+    },
+    "projects": {
+      "title": "مدیریت پروژه‌ها",
+      "title_desc": "مدیریت و پایش پروژه‌های معدنی"
+    },
+    "equipment": {
+      "title": "مدیریت تجهیزات",
+      "title_desc": "مدیریت تجهیزات و ماشین‌آلات معدنی"
+    },
+    "planning": {
+      "title": "برنامه‌ریزی",
+      "title_desc": "برنامه‌ریزی عملیات معدنی"
+    },
+    "period_planning": {
+      "title": "برنامه‌ریزی دوره‌ای",
+      "title_desc": "برنامه‌ریزی هفتگی و ماهانه عملیات"
+    },
+    "drill_planning": {
+      "title": "برنامه‌ریزی حفاری",
+      "title_desc": "برنامه‌ریزی عملیات حفاری"
+    },
+    "achievements": {
+      "title": "ثبت عملکرد",
+      "title_desc": "ثبت و پایش عملکرد روزانه"
+    },
+    "period_achievements": {
+      "title": "عملکرد دوره‌ای",
+      "title_desc": "بررسی عملکرد دوره‌ای پروژه‌ها"
+    },
+    "reports": {
+      "title": "گزارشات",
+      "title_desc": "گزارشات عملکرد و پیشرفت پروژه‌ها"
+    },
+    "advanced_reports": {
+      "title": "گزارشات تحلیلی",
+      "title_desc": "گزارشات تحلیلی و آماری پیشرفته"
+    },
+    "delay_reasons": {
+      "title": "دلایل تاخیر",
+      "title_desc": "مدیریت دلایل تاخیر عملیات"
+    },
+    "daily_planning": {
+      "title": "برنامه‌ریزی روزانه",
+      "title_desc": "برنامه‌ریزی روزانه عملیات"
+    },
+    "not_found": {
+      "title": "صفحه یافت نشد",
+      "title_desc": "صفحه مورد نظر شما یافت نشد"
+    }
+  }
+}

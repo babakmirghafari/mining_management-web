@@ -1,0 +1,260 @@
+<div class="page" dir="rtl">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ 'feature.drill_planning.title' | translate }}</h1>
+      <p class="page-subtitle">{{ 'feature.drill_planning.title_desc' | translate }}</p>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-body">
+        <div>
+          <p class="stat-label">کل برنامه‌ها</p>
+          <p class="stat-value">{{ totalPlans }}</p>
+        </div>
+        <span class="stat-icon">📋</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-body">
+        <div>
+          <p class="stat-label">برنامه‌های فعال</p>
+          <p class="stat-value text-green">{{ activePlans }}</p>
+        </div>
+        <span class="stat-icon">🔄</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-body">
+        <div>
+          <p class="stat-label">میانگین تحقق</p>
+          <p class="stat-value text-blue">{{ avgAchievement }}%</p>
+        </div>
+        <span class="stat-icon">📊</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab" [class.tab-active]="activeTab === 'list'" (click)="switchTab('list')">
+      لیست برنامه‌ها
+    </button>
+    <button class="tab" [class.tab-active]="activeTab === 'create'" (click)="switchTab('create')">
+      ایجاد برنامه
+    </button>
+    <button class="tab" [class.tab-active]="activeTab === 'details'" [disabled]="!selectedPlan"
+            (click)="switchTab('details')">
+      جزئیات
+    </button>
+  </div>
+
+  <!-- List Tab -->
+  @if (activeTab === 'list') {
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">لیست برنامه‌های حفاری</h3>
+      </div>
+      <div class="card-content">
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>عنوان</th>
+                <th>پروژه</th>
+                <th>دوره</th>
+                <th>تاریخ شروع</th>
+                <th>تاریخ پایان</th>
+                <th>مجموع برنامه</th>
+                <th>مجموع عملکرد</th>
+                <th>تحقق</th>
+                <th>عملیات</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (plan of drillPlans; track plan.id) {
+                <tr>
+                  <td class="font-medium">{{ plan.title }}</td>
+                  <td>{{ getProjectName(plan.projectId) }}</td>
+                  <td>
+                    <span class="badge" [class.badge-weekly]="plan.period === 'weekly'"
+                          [class.badge-monthly]="plan.period === 'monthly'">
+                      @if (plan.period === 'weekly') { هفتگی }
+                      @if (plan.period === 'monthly') { ماهانه }
+                    </span>
+                  </td>
+                  <td>{{ plan.startDate }}</td>
+                  <td>{{ plan.endDate }}</td>
+                  <td>{{ plan.totalPlanned }} {{ getUnitLabel(plan.unit) }}</td>
+                  <td>{{ plan.totalActual }} {{ getUnitLabel(plan.unit) }}</td>
+                  <td>
+                    <span class="badge" [class]="getAchievementColor(plan.overallAchievement)">
+                      {{ plan.overallAchievement }}%
+                    </span>
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-outline" (click)="openDetails(plan)">
+                      جزئیات
+                    </button>
+                  </td>
+                </tr>
+              }
+              @if (drillPlans.length === 0) {
+                <tr>
+                  <td colspan="9" class="empty-state">
+                    برنامه حفاری برای نمایش وجود ندارد
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Create Tab -->
+  @if (activeTab === 'create') {
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">ایجاد برنامه حفاری جدید</h3>
+      </div>
+      <div class="card-content">
+        <form (ngSubmit)="handleCreate()" class="create-form">
+          <!-- Project -->
+          <div class="form-group">
+            <label>پروژه</label>
+            <select [(ngModel)]="formData.projectId" name="projectId" required>
+              <option value="" disabled>انتخاب پروژه</option>
+              @for (p of dataService.projects; track p.id) {
+                <option [value]="p.id">{{ p.name }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Period -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>دوره</label>
+              <select [(ngModel)]="formData.period" name="period">
+                <option value="weekly">هفتگی</option>
+                <option value="monthly">ماهانه</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>عنوان</label>
+              <input type="text" [(ngModel)]="formData.title" name="title" required
+                     placeholder="عنوان برنامه حفاری" />
+            </div>
+          </div>
+
+          <!-- Start date & Unit -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>تاریخ شروع</label>
+              <input type="text" [(ngModel)]="formData.startDate" name="startDate"
+                     placeholder="1403/08/15" required />
+            </div>
+            <div class="form-group">
+              <label>واحد</label>
+              <select [(ngModel)]="formData.unit" name="unit">
+                @for (u of unitOptions; track u.value) {
+                  <option [value]="u.value">{{ u.label }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <!-- Daily target -->
+          <div class="form-group">
+            <label>هدف روزانه</label>
+            <input type="number" [(ngModel)]="formData.dailyTarget" name="dailyTarget" required />
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-outline" (click)="switchTab('list')">انصراف</button>
+            <button type="submit" class="btn btn-primary">ایجاد برنامه</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Details Tab -->
+  @if (activeTab === 'details' && selectedPlan) {
+    <div class="card">
+      <div class="card-header details-header">
+        <div>
+          <h3 class="card-title">{{ selectedPlan.title }}</h3>
+          <p class="text-muted text-sm">
+            پروژه: {{ getProjectName(selectedPlan.projectId) }} |
+            دوره: @if (selectedPlan.period === 'weekly') { هفتگی } @else { ماهانه } |
+            {{ selectedPlan.startDate }} - {{ selectedPlan.endDate }}
+          </p>
+        </div>
+        <button class="btn btn-primary" (click)="saveDetails()">ذخیره تغییرات</button>
+      </div>
+      <div class="card-content">
+        <!-- Summary Stats -->
+        <div class="details-stats">
+          <div class="detail-stat">
+            <span class="detail-stat-label">مجموع برنامه</span>
+            <span class="detail-stat-value">{{ selectedPlan.totalPlanned }} {{ getUnitLabel(selectedPlan.unit) }}</span>
+          </div>
+          <div class="detail-stat">
+            <span class="detail-stat-label">مجموع عملکرد</span>
+            <span class="detail-stat-value">{{ selectedPlan.totalActual }} {{ getUnitLabel(selectedPlan.unit) }}</span>
+          </div>
+          <div class="detail-stat">
+            <span class="detail-stat-label">تحقق کلی</span>
+            <span class="detail-stat-value" [class]="getAchievementColor(selectedPlan.overallAchievement)">
+              {{ selectedPlan.overallAchievement }}%
+            </span>
+          </div>
+        </div>
+
+        <!-- Daily Editable Table -->
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>تاریخ</th>
+                <th>مقدار برنامه</th>
+                <th>مقدار عملکرد</th>
+                <th>تحقق (%)</th>
+                <th>یادداشت</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (day of selectedPlan.days; track day.date) {
+                <tr>
+                  <td>{{ day.date }}</td>
+                  <td>
+                    <input type="number" class="inline-input" [(ngModel)]="day.plannedAmount"
+                           (ngModelChange)="recalculateDayAchievement(day)" />
+                  </td>
+                  <td>
+                    <input type="number" class="inline-input" [(ngModel)]="day.actualAmount"
+                           (ngModelChange)="recalculateDayAchievement(day)" />
+                  </td>
+                  <td>
+                    <span class="badge" [class]="getAchievementColor(day.achievementPercentage)">
+                      {{ day.achievementPercentage }}%
+                    </span>
+                  </td>
+                  <td>
+                    <input type="text" class="inline-input inline-input-wide" [(ngModel)]="day.notes"
+                           placeholder="یادداشت..." />
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  }
+</div>

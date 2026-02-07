@@ -1,0 +1,242 @@
+<div class="page" dir="rtl">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ 'feature.delay_reasons.title' | translate }}</h1>
+      <p class="page-subtitle">{{ 'feature.delay_reasons.title_desc' | translate }}</p>
+    </div>
+    <button class="btn btn-primary" (click)="openAddDialog()">
+      ➕ دلیل تاخیر جدید
+    </button>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-body">
+        <div>
+          <p class="stat-label">کل دلایل</p>
+          <p class="stat-value">{{ stats.total }}</p>
+        </div>
+        <span class="stat-icon">📋</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-body">
+        <div>
+          <p class="stat-label">فعال</p>
+          <p class="stat-value text-green">{{ stats.active }}</p>
+        </div>
+        <span class="stat-icon">✅</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-body">
+        <div>
+          <p class="stat-label">غیرفعال</p>
+          <p class="stat-value text-gray">{{ stats.inactive }}</p>
+        </div>
+        <span class="stat-icon">⏸️</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-body">
+        <div>
+          <p class="stat-label">دسته‌بندی‌ها</p>
+          <p class="stat-value text-purple">{{ stats.categories }}</p>
+        </div>
+        <span class="stat-icon">🏷️</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Reasons Table -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">دلایل تاخیر فعال</h3>
+    </div>
+    <div class="card-content">
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>نام</th>
+              <th>دسته‌بندی</th>
+              <th>توضیحات</th>
+              <th>رنگ</th>
+              <th>تاریخ ایجاد</th>
+              <th>عملیات</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (reason of activeReasons; track reason.id) {
+              <tr>
+                <td class="font-medium">{{ reason.name }}</td>
+                <td>
+                  <span class="badge category-badge" [style.background]="getCategoryInfo(reason.category).color">
+                    {{ getCategoryInfo(reason.category).label }}
+                  </span>
+                </td>
+                <td class="text-sm text-muted">{{ truncateDescription(reason.description) }}</td>
+                <td>
+                  <div class="color-cell">
+                    <span class="color-swatch" [style.background]="reason.color || '#ccc'"></span>
+                    <span class="text-xs text-muted">{{ reason.color || '-' }}</span>
+                  </div>
+                </td>
+                <td class="text-sm">{{ reason.createdAt }}</td>
+                <td>
+                  <div class="actions">
+                    <button class="btn btn-sm btn-outline" (click)="openEditDialog(reason)" title="ویرایش">✏️</button>
+                    <button class="btn btn-sm btn-outline btn-danger" (click)="deleteReason(reason.id)" title="حذف">🗑️</button>
+                  </div>
+                </td>
+              </tr>
+            }
+            @if (activeReasons.length === 0) {
+              <tr>
+                <td colspan="6" class="empty-state">هیچ دلیل تاخیر فعالی وجود ندارد</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inactive Reasons Table -->
+  @if (inactiveReasons.length > 0) {
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">دلایل تاخیر غیرفعال</h3>
+      </div>
+      <div class="card-content">
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>نام</th>
+                <th>دسته‌بندی</th>
+                <th>توضیحات</th>
+                <th>رنگ</th>
+                <th>تاریخ ایجاد</th>
+                <th>عملیات</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (reason of inactiveReasons; track reason.id) {
+                <tr class="row-inactive">
+                  <td class="font-medium">{{ reason.name }}</td>
+                  <td>
+                    <span class="badge category-badge" [style.background]="getCategoryInfo(reason.category).color" [style.opacity]="0.6">
+                      {{ getCategoryInfo(reason.category).label }}
+                    </span>
+                  </td>
+                  <td class="text-sm text-muted">{{ truncateDescription(reason.description) }}</td>
+                  <td>
+                    <div class="color-cell">
+                      <span class="color-swatch" [style.background]="reason.color || '#ccc'"></span>
+                      <span class="text-xs text-muted">{{ reason.color || '-' }}</span>
+                    </div>
+                  </td>
+                  <td class="text-sm">{{ reason.createdAt }}</td>
+                  <td>
+                    <div class="actions">
+                      <button class="btn btn-sm btn-outline" (click)="openEditDialog(reason)" title="ویرایش">✏️</button>
+                      <button class="btn btn-sm btn-outline btn-danger" (click)="deleteReason(reason.id)" title="حذف">🗑️</button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Category Breakdown -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">تفکیک بر اساس دسته‌بندی</h3>
+    </div>
+    <div class="card-content">
+      <div class="category-grid">
+        @for (item of categoryBreakdown; track item.info.key) {
+          <div class="category-card" [style.border-right-color]="item.info.color">
+            <div class="category-card-header">
+              <span class="category-dot" [style.background]="item.info.color"></span>
+              <span class="category-name">{{ item.info.label }}</span>
+              <span class="category-count">{{ item.count }}</span>
+            </div>
+            <div class="category-card-body">
+              @for (reason of item.reasons; track reason.id) {
+                <div class="category-reason-item">
+                  <span class="reason-name-sm">{{ reason.name }}</span>
+                  @if (reason.isActive) {
+                    <span class="badge-sm badge-active">فعال</span>
+                  } @else {
+                    <span class="badge-sm badge-inactive">غیرفعال</span>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Create / Edit Dialog -->
+  @if (isDialogOpen) {
+    <div class="dialog-overlay" (click)="closeDialog()">
+      <div class="dialog" (click)="$event.stopPropagation()" dir="rtl">
+        <div class="dialog-header">
+          <h3>{{ selectedReason ? 'ویرایش دلیل تاخیر' : 'افزودن دلیل تاخیر جدید' }}</h3>
+          <p class="dialog-desc">
+            {{ selectedReason ? 'اطلاعات دلیل تاخیر را ویرایش کنید' : 'اطلاعات دلیل تاخیر جدید را وارد کنید' }}
+          </p>
+        </div>
+        <form (ngSubmit)="handleSubmit()">
+          <div class="form-group">
+            <label>نام</label>
+            <input type="text" [(ngModel)]="formData.name" name="name" required placeholder="نام دلیل تاخیر" />
+          </div>
+          <div class="form-group">
+            <label>دسته‌بندی</label>
+            <select [(ngModel)]="formData.category" name="category">
+              @for (cat of categories; track cat.key) {
+                <option [value]="cat.key">{{ cat.label }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label>توضیحات</label>
+            <textarea [(ngModel)]="formData.description" name="description" rows="3" placeholder="توضیحات مربوط به دلیل تاخیر"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>رنگ</label>
+              <div class="color-input-wrap">
+                <input type="color" [(ngModel)]="formData.color" name="color" class="color-picker" />
+                <input type="text" [(ngModel)]="formData.color" name="colorText" class="color-text" placeholder="#FF5733" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="checkbox-label-wrap">
+                <input type="checkbox" [(ngModel)]="formData.isActive" name="isActive" />
+                <span>فعال</span>
+              </label>
+            </div>
+          </div>
+          <div class="dialog-actions">
+            <button type="button" class="btn btn-outline" (click)="closeDialog()">انصراف</button>
+            <button type="submit" class="btn btn-primary">
+              {{ selectedReason ? 'ویرایش' : 'افزودن' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

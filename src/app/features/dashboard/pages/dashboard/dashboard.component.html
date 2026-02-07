@@ -1,0 +1,172 @@
+<div class="dashboard" dir="rtl">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">داشبورد</h1>
+      <p class="page-subtitle">
+        خوش آمدید، {{ currentUser?.name }} - نمای کلی عملکرد پروژه‌ها
+      </p>
+    </div>
+    @if (currentUser?.role === 'admin') {
+      <button class="btn btn-outline" (click)="resetData()">
+        🔄 بازنشانی داده‌ها
+      </button>
+    }
+  </div>
+
+  <!-- Project Progress Cards -->
+  <section class="section">
+    <h2 class="section-title">پیشرفت پروژه‌ها</h2>
+    <div class="projects-grid">
+      @for (project of availableProjects; track project.id) {
+        <div class="project-card">
+          <div class="project-card-header">
+            <div class="project-info">
+              <h3 class="project-name">{{ project.name }}</h3>
+              <p class="project-location">📍 {{ project.location }}</p>
+            </div>
+            <!-- SVG Progress Circle -->
+            <div class="progress-circle-wrapper">
+              <svg class="progress-circle" viewBox="0 0 64 64">
+                <circle cx="32" cy="32" r="28" stroke-width="4" fill="none" class="circle-bg" />
+                <circle cx="32" cy="32" r="28" stroke-width="4" fill="none"
+                  [attr.stroke-dasharray]="getStrokeDasharray()"
+                  [attr.stroke-dashoffset]="getStrokeDashoffset(getProjectProgress(project))"
+                  [class]="'circle-progress ' + getProgressRingClass(getProjectProgress(project))"
+                  stroke-linecap="round" />
+              </svg>
+              <div class="progress-label">{{ getProjectProgress(project) }}%</div>
+            </div>
+          </div>
+
+          <!-- Stats Grid -->
+          <div class="stats-mini-grid">
+            <div class="stat-mini">
+              <span class="stat-mini-label">کل برنامه</span>
+              <span class="stat-mini-value">{{ getProjectTotalPlanned(project).toLocaleString() }}</span>
+            </div>
+            <div class="stat-mini stat-green">
+              <span class="stat-mini-label">تحقق</span>
+              <span class="stat-mini-value green">{{ getProjectAchieved(project).toLocaleString() }}</span>
+            </div>
+            <div class="stat-mini stat-blue">
+              <span class="stat-mini-label">برنامه امروز</span>
+              <span class="stat-mini-value blue">{{ getPlannedToDate(project).toLocaleString() }}</span>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="progress-bar-wrapper">
+            <div class="progress-bar">
+              <div class="progress-bar-fill" [style.width.%]="getProjectProgress(project)"></div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="project-card-footer">
+            <span class="date-info">📅 {{ project.startDate }}</span>
+            <span [class]="'status-info ' + getStatusColor(project)">
+              {{ getStatusIcon(project) }} {{ getStatusText(project) }}
+            </span>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- Key Metrics -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">پروژه‌های فعال</span>
+        <span class="metric-icon">🏗️</span>
+      </div>
+      <div class="metric-value">{{ activeProjects }}</div>
+      <p class="metric-sub">+2 از ماه گذشته</p>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">تجهیزات فعال</span>
+        <span class="metric-icon">🚛</span>
+      </div>
+      <div class="metric-value">{{ activeEquipment }}</div>
+      <p class="metric-sub">از {{ totalEquipment }} تجهیز</p>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">راندمان ماهانه</span>
+        <span class="metric-icon">📊</span>
+      </div>
+      <div class="metric-value">{{ displayEfficiency }}%</div>
+      <p class="metric-sub">کل پروژه‌ها</p>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">اپراتورهای فعال</span>
+        <span class="metric-icon">👷</span>
+      </div>
+      <div class="metric-value">45</div>
+      <p class="metric-sub">در 12 پروژه</p>
+    </div>
+  </div>
+
+  <!-- Last 7 Days Performance -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">📅 عملکرد 7 روز اخیر</h3>
+    </div>
+    <div class="card-content">
+      @for (day of last7Days; track day.date) {
+        <div class="day-row" [class.favorable]="day.isFavorable" [class.unfavorable]="!day.isFavorable">
+          <div class="day-grid">
+            <!-- Date -->
+            <div class="day-date">
+              <span class="day-name">{{ day.dayName }}</span>
+              <span class="day-date-value">{{ day.date }}</span>
+            </div>
+
+            <!-- Project & Operation -->
+            <div class="day-project">
+              <div class="day-project-name">🏗️ {{ day.projectName }}</div>
+              <div class="day-operation-name">⚙️ {{ day.operationName }}</div>
+            </div>
+
+            <!-- Planned -->
+            <div class="day-stat planned-stat">
+              <span class="day-stat-label">برنامه</span>
+              <span class="day-stat-value blue">{{ day.planned.toLocaleString() }}</span>
+              <span class="day-stat-unit">{{ day.unit }}</span>
+            </div>
+
+            <!-- Achieved -->
+            <div class="day-stat achieved-stat">
+              <span class="day-stat-label">تحقق</span>
+              <span class="day-stat-value green">{{ day.achieved.toLocaleString() }}</span>
+              <span class="day-stat-unit">{{ day.unit }}</span>
+            </div>
+
+            <!-- Efficiency -->
+            <div class="day-efficiency">
+              <span [class]="'eff-badge ' + getEfficiencyClass(getDayEfficiency(day))">
+                {{ getDayEfficiency(day) }}%
+              </span>
+            </div>
+
+            <!-- Variance -->
+            <div class="day-variance" [class.var-positive]="day.isFavorable" [class.var-negative]="!day.isFavorable">
+              <div class="var-status">
+                <span>{{ day.isFavorable ? '🎯' : '⚠️' }}</span>
+                <span class="var-label">{{ day.isFavorable ? 'مساعد' : 'نامساعد' }}</span>
+              </div>
+              <span class="var-value">{{ day.isFavorable ? '+' : '' }}{{ Math.abs(day.variance).toLocaleString() }}</span>
+              <span class="var-percent">{{ day.variancePercent }}%</span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

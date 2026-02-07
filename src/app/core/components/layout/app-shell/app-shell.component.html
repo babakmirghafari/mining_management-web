@@ -1,0 +1,41 @@
+<div class="app-shell" dir="rtl">
+  <div class="shell-flex">
+    <!-- Sidebar -->
+    <div class="sidebar" [class.sidebar-open]="sidebarOpen" [class.sidebar-closed]="!sidebarOpen">
+      <!-- Header -->
+      <div class="sidebar-header">
+        <div class="sidebar-header-inner">
+          <h1 *ngIf="sidebarOpen" class="sidebar-title">
+            {{ 'common.system_title' | translate }}
+          </h1>
+          <button class="toggle-btn" (click)="toggleSidebar()">☰</button>
+        </div>
+      </div>
+
+      <!-- User Info -->
+      <div class="sidebar-user">
+        <div *ngIf="sidebarOpen && currentUser" class="user-info">
+          <p class="user-name">{{ currentUser.name }}</p>
+          <p class="user-role">{{ userRoleLabel | translate }}</p>
+        </div>
+        <button class="logout-btn" (click)="logout()">
+          <span *ngIf="sidebarOpen">{{ 'common.logout' | translate }}</span>
+          <span *ngIf="!sidebarOpen">⏻</span>
+        </button>
+      </div>
+
+      <!-- Menu -->
+      <app-menu
+        [menuItems]="menuItems"
+        [activeRoute]="activeRoute"
+        [sidebarOpen]="sidebarOpen"
+        (navigate)="onNavigate($event)">
+      </app-menu>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div>
