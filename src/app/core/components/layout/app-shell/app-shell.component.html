@@ -5,22 +5,29 @@
       <!-- Header -->
       <div class="sidebar-header">
         <div class="sidebar-header-inner">
-          <h1 *ngIf="sidebarOpen" class="sidebar-title">
-            {{ 'common.system_title' | translate }}
-          </h1>
-          <button class="toggle-btn" (click)="toggleSidebar()">☰</button>
+          @if (sidebarOpen) {
+            <h1 class="sidebar-title">
+              {{ 'common.system_title' | translate }}
+            </h1>
+          }
+          <button class="toggle-btn" (click)="toggleSidebar()">&#9776;</button>
         </div>
       </div>
 
       <!-- User Info -->
       <div class="sidebar-user">
-        <div *ngIf="sidebarOpen && currentUser" class="user-info">
-          <p class="user-name">{{ currentUser.name }}</p>
-          <p class="user-role">{{ userRoleLabel | translate }}</p>
-        </div>
+        @if (sidebarOpen && currentUser) {
+          <div class="user-info">
+            <p class="user-name">{{ currentUser.name }}</p>
+            <p class="user-role">{{ userRoleLabel | translate }}</p>
+          </div>
+        }
         <button class="logout-btn" (click)="logout()">
-          <span *ngIf="sidebarOpen">{{ 'common.logout' | translate }}</span>
-          <span *ngIf="!sidebarOpen">⏻</span>
+          @if (sidebarOpen) {
+            <span>{{ 'common.logout' | translate }}</span>
+          } @else {
+            <span>&#9211;</span>
+          }
         </button>
       </div>
 

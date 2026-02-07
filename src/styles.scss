@@ -1,4 +1,61 @@
 /* Global styles - Mining Management System */
+
+/* ===== IRANSans Font Face Declarations ===== */
+
+@font-face {
+  font-family: 'IRANSans';
+  src: url('/assets/fonts/IRANSans/woff2/IRANSansWeb(FaNum)_UltraLight.woff2') format('woff2'),
+       url('/assets/fonts/IRANSans/woff/IRANSansWeb(FaNum)_UltraLight.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IRANSans';
+  src: url('/assets/fonts/IRANSans/woff2/IRANSansWeb(FaNum)_Light.woff2') format('woff2'),
+       url('/assets/fonts/IRANSans/woff/IRANSansWeb(FaNum)_Light.woff') format('woff');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IRANSans';
+  src: url('/assets/fonts/IRANSans/woff2/IRANSansWeb.woff2') format('woff2'),
+       url('/assets/fonts/IRANSans/woff/IRANSansWeb.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IRANSans';
+  src: url('/assets/fonts/IRANSans/woff2/IRANSansWeb(FaNum)_Medium.woff2') format('woff2'),
+       url('/assets/fonts/IRANSans/woff/IRANSansWeb(FaNum)_Medium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IRANSans';
+  src: url('/assets/fonts/IRANSans/woff2/IRANSansWeb(FaNum)_Bold.woff2') format('woff2'),
+       url('/assets/fonts/IRANSans/woff/IRANSansWeb(FaNum)_Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IRANSans';
+  src: url('/assets/fonts/IRANSans/woff2/IRANSansWeb(FaNum)_Bold.woff2') format('woff2'),
+       url('/assets/fonts/IRANSans/woff/IRANSansWeb(FaNum)_Bold.woff') format('woff');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #1f2937;
@@ -36,7 +93,7 @@
 }
 
 html {
-  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-family: 'IRANSans', ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   line-height: 1.5;
   -webkit-text-size-adjust: 100%;
 }

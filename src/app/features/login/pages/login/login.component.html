@@ -26,7 +26,9 @@
             required
             dir="ltr" />
         </div>
-        <div *ngIf="errorMessage" class="error-message">{{ errorMessage }}</div>
+        @if (errorMessage) {
+          <div class="error-message">{{ errorMessage }}</div>
+        }
         <button type="submit" class="submit-btn" [disabled]="loading">
           {{ loading ? ('login.logging_in' | translate) : ('login.submit' | translate) }}
         </button>
